@@ -1,13 +1,3 @@
-# Scenario: Alex wants to build an algorithmic trading tool with Python.
-# Step 1: Initialize a trading class with symbol, from_date, and to_date
-# Step 2: Acquire historical data using yfinance
-# Step 3: Clean the data (remove duplicates, forward-fill NaNs)
-# Step 4: Compute moving averages (50-day and 200-day)
-# Step 5: Investment Strategy: Determine max quantity of shares within $5000
-# Step 6: Timely Actions: Buy on golden cross, sell on death cross
-# Step 7: Forcefully close position at the last row if still open
-# Step 8: Evaluation: Calculate profits/losses and ROI
-
 import yfinance as yf
 import pandas as pd
 
