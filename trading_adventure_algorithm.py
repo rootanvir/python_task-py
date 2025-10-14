@@ -1,7 +1,18 @@
+# Scenario: Alex wants to build an algorithmic trading tool with Python.
+# Step 1: Initialize a trading class with symbol, from_date, and to_date
+# Step 2: Acquire historical data using yfinance
+# Step 3: Clean the data (remove duplicates, forward-fill NaNs)
+# Step 4: Compute moving averages (50-day and 200-day)
+# Step 5: Investment Strategy: Determine max quantity of shares within $5000
+# Step 6: Timely Actions: Buy on golden cross, sell on death cross
+# Step 7: Forcefully close position at the last row if still open
+# Step 8: Evaluation: Calculate profits/losses and ROI
+
 import yfinance as yf
 import pandas as pd
 
 class trade():
+    # Step 1: Initialize class
     def __init__(self, symbol, from_date, to_date):
         self.symbol = symbol
         self.from_date = from_date
@@ -11,13 +22,16 @@ class trade():
         self.position = 0
         self.buy_price = 0
         self.total_profit = 0
+        self.initial_cash = 5000
         
+    # Step 2: Get historical data
     def get_data(self):
         self.data = yf.download(self.symbol, start=self.from_date, end=self.to_date)
         self.clean_data()
         self.data.to_csv("historical_market_data.csv")
-        print(f"Data saved to csv [cleaned]")
+        print("Data saved to csv [cleaned]")
         
+    # Step 3: Clean data
     def clean_data(self):
         if self.data is not None:
             self.data = self.data.drop_duplicates()
@@ -25,6 +39,7 @@ class trade():
         else:
             print("Nothing to clean")
             
+    # Step 4: Compute moving averages
     def moving_average(self):
         if self.data is not None:
             self.data['avg_50'] = self.data['Close'].rolling(window=50).mean()
@@ -32,16 +47,17 @@ class trade():
         else:
             print("No data to calculate averages")
     
+    # Step 5: Investment Strategy
     def investment_strategy(self):
         if self.data is not None:
-            latest_price = float(self.data['Close'].iloc[-1])  # ✅ convert to float
+            latest_price = float(self.data['Close'].iloc[-1])
             budget = 5000
             max_shares = int(budget // latest_price)
             print(f"With a ${budget} budget, you can buy {max_shares} shares of {self.symbol} at ${latest_price:.2f} each.")
         else:
             print("No data available to calculate investment strategy.")
 
-    
+    # Step 6, 7, 8: Trade signals, timely actions, forced sell, and evaluation
     def trade_signals(self):
         if self.data is None:
             print("No data to trade on")
@@ -52,16 +68,16 @@ class trade():
             prev_long = float(self.data['avg_200'].iloc[i-1])
             short = float(self.data['avg_50'].iloc[i])
             long = float(self.data['avg_200'].iloc[i])
-            price = float(self.data['Close'].iloc[i])  # ✅ ensures it's a scalar float
+            price = float(self.data['Close'].iloc[i])
             
-            # Golden Cross → Buy
+            # Buy on golden cross if not holding
             if prev_short < prev_long and short > long and self.position == 0:
                 self.position = int(self.cash // price)
                 self.cash -= self.position * price
                 self.buy_price = price
                 print(f"BUY {self.position} shares at ${price:.2f} on {self.data.index[i].date()}")
             
-            # Death Cross → Sell
+            # Sell on death cross if holding
             elif prev_short > prev_long and short < long and self.position > 0:
                 self.cash += self.position * price
                 profit = (price - self.buy_price) * self.position
@@ -69,7 +85,7 @@ class trade():
                 print(f"SELL {self.position} shares at ${price:.2f} on {self.data.index[i].date()} | Profit: ${profit:.2f}")
                 self.position = 0
         
-        # Final forced sell if still holding
+        # Forced sell at last day if still holding
         if self.position > 0:
             price = float(self.data['Close'].iloc[-1])
             self.cash += self.position * price
@@ -78,13 +94,16 @@ class trade():
             print(f"FORCED SELL {self.position} shares at ${price:.2f} on last day | Profit: ${profit:.2f}")
             self.position = 0
         
-        print(f"\nFinal Portfolio Value: ${self.cash:.2f}")
+        # Evaluation: final portfolio value and ROI
+        final_value = self.cash
+        profit_percent = (final_value - self.initial_cash) / self.initial_cash * 100
+        print(f"\nFinal Portfolio Value: ${final_value:.2f}")
         print(f"Total Profit: ${self.total_profit:.2f}")
+        print(f"Return on Investment (ROI): {profit_percent:.2f}%")
 
 # ===== Usage =====
 trd = trade("AAPL", "2018-01-01", "2023-12-31")
 trd.get_data()
 trd.moving_average()
-trd.investment_strategy()                           
-trd.trade_signals()         
-
+trd.investment_strategy()
+trd.trade_signals()
