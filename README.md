@@ -1,4 +1,4 @@
-# Samsung phoone 
+# Samsung phones 
 ## Requirements
 ```bash
 pip install psycopg2-binary
