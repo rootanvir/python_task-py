@@ -1,0 +1,22 @@
+# Samsung phoone 
+```bash
+CREATE DATABASE phonesdb;
+```
+```bash
+CREATE TABLE samsung_phones (
+  id SERIAL PRIMARY KEY,
+  model_name TEXT NOT NULL,
+  codename TEXT,
+  release_date DATE,
+  display TEXT,
+  battery TEXT,
+  camera JSONB,
+  ram_gb INTEGER,
+  storage_gb INTEGER,
+  price_currency TEXT,
+  price_amount NUMERIC,
+  specs_raw JSONB,
+  source_url TEXT UNIQUE,
+  scraped_at TIMESTAMP DEFAULT now()
+);
+```
