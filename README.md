@@ -7,6 +7,7 @@ pip install psycopg2-binary
 ```bash
 pip install pandas psycopg2-binary beautifulsoup4 requests
 ```
+## Database setup
 ```bash
 CREATE DATABASE phonesdb;
 ```
