@@ -20,3 +20,7 @@ CREATE TABLE samsung_phones (
   scraped_at TIMESTAMP DEFAULT now()
 );
 ```
+## Install dependencies first:
+```bash
+pip install psycopg2-binary beautifulsoup4 requests
+```
