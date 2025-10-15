@@ -1,4 +1,12 @@
 # Samsung phoone 
+## Requirements
+```bash
+pip install psycopg2-binary
+```
+
+```bash
+pip install pandas psycopg2-binary beautifulsoup4 requests
+```
 ```bash
 CREATE DATABASE phonesdb;
 ```
