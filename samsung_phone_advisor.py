@@ -1,102 +1,111 @@
-import requests
-from bs4 import BeautifulSoup
-import psycopg2
 import csv
+import psycopg2
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
 import time
 
-# === Database Connection ===
-conn = psycopg2.connect(
-    dbname="phonesdb",
-    user="postgres",
-    password="1234",
-    host="localhost",
-    port="5432"
-)
-cur = conn.cursor()
+class SamsungScraper:
+    def __init__(self, csv_file="samsung_phones.csv", db_config=None):
+        self.csv_file = csv_file
+        self.db_config = db_config or {
+            "dbname": "phonesdb",
+            "user": "postgres",
+            "password": "1234",
+            "host": "localhost",
+            "port": "5432"
+        }
+        chrome_options = Options()
+        chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--disable-gpu")
+        self.driver = webdriver.Chrome(options=chrome_options)
 
-base_url = "https://www.gsmarena.com/"
-brand_url = "https://www.gsmarena.com/samsung-phones-9.php"
+    def scrape_to_csv(self):
+        url = "https://www.gsmarena.com/samsung-phones-9.php"  # Example page
+        self.driver.get(url)
+        time.sleep(2)
 
-headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                  "AppleWebKit/537.36 (KHTML, like Gecko) "
-                  "Chrome/119.0.0.0 Safari/537.36"
-}
+        phones = self.driver.find_elements(By.CSS_SELECTOR, ".makers li a")
+        print(f"Found {len(phones)} phones on the page...")
 
-csv_file = "samsung_phones.csv"
-csv_headers = ['model_name', 'release_date', 'display', 'battery', 'camera', 'ram', 'storage', 'price']
-data_rows = []
+        data_list = []
 
-page_num = 1
+        for phone in phones[:30]:  # Limit to top 30 phones
+            model_name = phone.text.strip()
+            link = phone.get_attribute("href")
 
-while True:
-    print(f"\n🔎 Scraping page {page_num} ...")
-    url = f"https://www.gsmarena.com/samsung-phones-f-9-0-p{page_num}.php" if page_num > 1 else brand_url
-    r = requests.get(url, headers=headers)
-    soup = BeautifulSoup(r.text, "html.parser")
+            # Go to phone detail page
+            self.driver.get(link)
+            time.sleep(1)
 
-    phone_items = soup.select(".makers ul li a")
-    if not phone_items:
-        print("❌ No more phones found.")
-        break
+            try:
+                release_date = self.driver.find_element(By.XPATH, "//td[text()='Announced']/following-sibling::td").text
+            except:
+                release_date = "N/A"
+            try:
+                display = self.driver.find_element(By.XPATH, "//td[text()='Display']/following-sibling::td").text
+            except:
+                display = "N/A"
+            try:
+                battery = self.driver.find_element(By.XPATH, "//td[text()='Battery']/following-sibling::td").text
+            except:
+                battery = "N/A"
+            try:
+                camera = self.driver.find_element(By.XPATH, "//td[text()='Main Camera']/following-sibling::td").text
+            except:
+                camera = "N/A"
+            try:
+                ram = self.driver.find_element(By.XPATH, "//td[text()='Internal']/following-sibling::td").text
+            except:
+                ram = "N/A"
+            try:
+                storage = ram  # Sometimes storage and RAM are in same field
+            except:
+                storage = "N/A"
+            try:
+                price = self.driver.find_element(By.XPATH, "//td[text()='Price']/following-sibling::td").text
+            except:
+                price = "N/A"
 
-    for item in phone_items:
-        model_name = item.text.strip()
-        phone_link = base_url + item["href"]
-        print(f"→ {model_name}")
+            data_list.append([model_name, release_date, display, battery, camera, ram, storage, price])
+            self.driver.back()
+            time.sleep(1)
 
-        r2 = requests.get(phone_link, headers=headers)
-        phone_soup = BeautifulSoup(r2.text, "html.parser")
+        # Save to CSV
+        with open(self.csv_file, "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow(["model_name","release_date","display","battery","camera","ram","storage","price"])
+            writer.writerows(data_list)
 
-        release_date = display = battery = camera = ram = storage = price = "N/A"
+        print(f"✅ Scraping complete! Data saved to CSV: {self.csv_file}")
 
-        for table in phone_soup.select("#specs-list table"):
-            for row in table.select("tr"):
-                title = row.find("td", {"class": "ttl"})
-                info = row.find("td", {"class": "nfo"})
-                if not title or not info:
-                    continue
+    def csv_to_postgresql(self):
+        conn = psycopg2.connect(**self.db_config)
+        cur = conn.cursor()
 
-                t = title.text.strip().lower()
-                i = info.text.strip()
+        with open(self.csv_file, "r", encoding="utf-8") as f:
+            reader = csv.reader(f)
+            headers = next(reader)  # Skip header row
 
-                if "announced" in t:
-                    release_date = i
-                elif "display" in t:
-                    display = i
-                elif "battery" in t:
-                    battery = i
-                elif "camera" in t and camera == "N/A":
-                    camera = i
-                elif "internal" in t:
-                    storage = i
-                elif "ram" in i:
-                    ram = i
-                elif "price" in t:
-                    price = i
+            for row in reader:
+                row = [r if r else "N/A" for r in row]
+                cur.execute("""
+                    INSERT INTO samsung_phones
+                    (model_name, release_date, display, battery, camera, ram, storage, price)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                """, row)
 
-        phone_data = [model_name, release_date, display, battery, camera, ram, storage, price]
-        data_rows.append(phone_data)
-
-        # === Insert into PostgreSQL ===
-        cur.execute("""
-            INSERT INTO samsung_phones (model_name, release_date, display, battery, camera, ram, storage, price)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
-        """, phone_data)
         conn.commit()
+        cur.close()
+        conn.close()
+        print("✅ CSV data inserted into PostgreSQL table 'samsung_phones'")
 
-        time.sleep(1)  # be polite
+    def close_driver(self):
+        self.driver.quit()
 
-    page_num += 1
-    time.sleep(2)
 
-# === Save to CSV ===
-with open(csv_file, "w", newline="", encoding="utf-8") as f:
-    writer = csv.writer(f)
-    writer.writerow(csv_headers)
-    writer.writerows(data_rows)
-
-cur.close()
-conn.close()
-
-print("\n✅ Scraping complete! Data saved to CSV and inserted into PostgreSQL.")
+if __name__ == "__main__":
+    scraper = SamsungScraper()
+    #scraper.scrape_to_csv()          # Scrape and save to CSV
+    scraper.csv_to_postgresql()      # Insert CSV into PostgreSQL
+    scraper.close_driver()
