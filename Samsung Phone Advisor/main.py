@@ -1,9 +1,16 @@
 import csv
+import json
 import psycopg2
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 import time
+from rag_module import RAGModule
+from multi_agent_system import MultiAgentSystem
+from response_composer import ResponseComposer
+import app
+import re
+
 
 class SamsungScraper:
     def __init__(self, csv_file="samsung_phones.csv", db_config=None):
@@ -20,6 +27,8 @@ class SamsungScraper:
         chrome_options.add_argument("--disable-gpu")
         self.driver = webdriver.Chrome(options=chrome_options)
 
+        
+        
     def scrape_to_csv(self):
         url = "https://www.gsmarena.com/samsung-phones-9.php"  # Example page
         self.driver.get(url)
@@ -179,13 +188,88 @@ class SamsungAdvisor:
 
 
 
-if __name__ == "__main__":
-    #scraper = SamsungScraper()
-    #scraper.scrape_to_csv()
-    #scraper.csv_to_postgresql()
-    #scraper.close_driver()
+if __name__ == "__main__": 
+    # ---------- Old scraper & advisor calls (keep for reference) ----------
+    # scraper = SamsungScraper()
+    # scraper.scrape_to_csv()
+    # scraper.csv_to_postgresql()
+    # scraper.close_driver()
 
-    advisor = SamsungAdvisor()
-    advisor.get_specs("Galaxy M17")
-    advisor.compare_phones("Galaxy M17", "Galaxy F36")
-    advisor.best_battery_under(1000)    
+    # advisor = SamsungAdvisor()
+    # advisor.get_specs("Galaxy M17")
+    # advisor.compare_phones("Galaxy M17", "Galaxy F36")
+    # advisor.best_battery_under(1000)
+
+    # rag = RAGModule(scraper.db_config)
+    # print(rag.answer("What is the price of Galaxy A17?"))
+    # print(rag.answer("Compare Galaxy S25 and Galaxy S25 Ultra for battery"))
+
+    # con = SamsungScraper()
+    # rag = RAGModule(con.db_config)
+    # print(rag.answer("What are the specs of Galaxy M17?"))
+    
+
+    
+
+    # ---------- New Multi-Agent + Response Composer ----------
+    # con = SamsungScraper()
+    # agents = MultiAgentSystem(con.db_config)
+    # composer = ResponseComposer()
+
+    # phone1_list = agents.agent1("Galaxy M17")
+    # phone2_list = agents.agent1("Galaxy S25 Edge")
+
+    # if not phone1_list or not phone2_list:
+    #     print({"answer": "⚠️ One or both phones not found in the database."})
+    # else:
+    #     phone1_data = phone1_list[0]
+    #     phone2_data = phone2_list[0]
+
+    #     rag_data = {
+    #         "phone1": phone1_data[0],
+    #         "phone2": phone2_data[0]
+    #     }
+
+    #     # agent2 returns a concise comparison string
+    #     comparison_text = agents.agent2(phone1_list, phone2_list)
+
+    #     final_answer = composer.compose_response(rag_data, phone1_data, comparison_text)
+    #     print(final_answer)
+    
+    
+    
+    # Initialize scraper, agents, and composer
+    scraper = SamsungScraper()
+    agents = MultiAgentSystem(scraper.db_config)
+    composer = ResponseComposer()
+
+    # User query
+    question_text = "Compare Samsung Galaxy M17 and Galaxy S25 Edge"
+
+    # Extract phone names from query (simple regex)
+    phone_names = re.findall(r"Galaxy\s\S+", question_text, re.IGNORECASE)
+    if len(phone_names) != 2:
+        print("⚠️ Could not parse two phone names from the question.")
+    else:
+        # Fetch phone data from DB via agent1
+        phone1_list = agents.agent1(phone_names[0])
+        phone2_list = agents.agent1(phone_names[1])
+
+        if not phone1_list or not phone2_list:
+            print("⚠️ One or both phones not found in the database.")
+        else:
+            # Take the first match (agent1 returns list of rows)
+            phone1_data = phone1_list[0]
+            phone2_data = phone2_list[0]
+
+            # Build RAG-like data for composer
+            rag_data = {"phone1": phone1_data[0], "phone2": phone2_data[0]}
+
+            # Compare phones via agent2
+            comparison_text = agents.agent2(phone1_list, phone2_list)
+
+            # Compose final answer
+            final_answer = composer.compose_response(rag_data, phone1_data, comparison_text)
+            print("\n✅ Answer:\n")
+            print(final_answer)
+    
