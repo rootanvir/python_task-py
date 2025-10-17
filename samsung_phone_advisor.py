@@ -103,9 +103,89 @@ class SamsungScraper:
     def close_driver(self):
         self.driver.quit()
 
+# ---------- Query Interface ---------- #
+class SamsungAdvisor:
+    def __init__(self, db_config=None):
+        self.db_config = db_config or {
+            "dbname": "phonesdb",
+            "user": "postgres",
+            "password": "1234",
+            "host": "localhost",
+            "port": "5432"
+        }
+
+    def connect(self):
+        return psycopg2.connect(**self.db_config)
+
+    def get_specs(self, model_name):
+        conn = self.connect()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT * FROM samsung_phones
+            WHERE LOWER(model_name) LIKE LOWER(%s)
+        """, (f"%{model_name}%",))
+        result = cur.fetchone()
+        cur.close()
+        conn.close()
+        if result:
+            print(f"\n📱 {result[0]} Specs:")
+            print(f"Released: {result[1]}")
+            print(f"Display: {result[2]}")
+            print(f"Battery: {result[3]}")
+            print(f"Camera: {result[4]}")
+            print(f"RAM: {result[5]}")
+            print(f"Storage: {result[6]}")
+            print(f"Price: {result[7]}")
+        else:
+            print("Model not found.")
+
+    def compare_phones(self, model1, model2):
+        conn = self.connect()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT model_name, camera, battery, price FROM samsung_phones
+            WHERE LOWER(model_name) LIKE LOWER(%s)
+               OR LOWER(model_name) LIKE LOWER(%s)
+        """, (f"%{model1}%", f"%{model2}%"))
+        results = cur.fetchall()
+        cur.close()
+        conn.close()
+
+        if len(results) == 2:
+            print("\n Comparison:")
+            for r in results:
+                print(f"\n{r[0]}:")
+                print(f"  Camera: {r[1]}")
+                print(f"  Battery: {r[2]}")
+                print(f"  Price: {r[3]}")
+        else:
+            print("Could not find both phones for comparison.")
+
+    def best_battery_under(self, price_limit):
+        conn = self.connect()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT model_name, battery, price FROM samsung_phones
+            WHERE price != 'N/A'
+        """)
+        results = cur.fetchall()
+        cur.close()
+        conn.close()
+
+        # This part would normally need numeric parsing if price data was consistent
+        print(f"\n⚡ Best battery phones under ${price_limit} (approx data):")
+        for r in results[:5]:
+            print(f"{r[0]} → Battery: {r[1]}, Price: {r[2]}")
+
+
 
 if __name__ == "__main__":
-    scraper = SamsungScraper()
-    #scraper.scrape_to_csv()          # Scrape and save to CSV
-    scraper.csv_to_postgresql()      # Insert CSV into PostgreSQL
-    scraper.close_driver()
+    #scraper = SamsungScraper()
+    #scraper.scrape_to_csv()
+    #scraper.csv_to_postgresql()
+    #scraper.close_driver()
+
+    advisor = SamsungAdvisor()
+    advisor.get_specs("Galaxy M17")
+    advisor.compare_phones("Galaxy M17", "Galaxy F36")
+    advisor.best_battery_under(1000)    
