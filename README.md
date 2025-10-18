@@ -28,6 +28,6 @@
 5.run the script.sql in PostgreSQL to set up the database
 
 # Run the prgram
-1.python python_task-py\Algorithmic_Trading_Adventure\trading_adventure_algorithm.py
-2.python python_task-py\Samsung_Phone_Advisor\main.py
+1. python python_task-py\Algorithmic_Trading_Adventure\trading_adventure_algorithm.py
+2. python python_task-py\Samsung_Phone_Advisor\main.py
  - choose option
