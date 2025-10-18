@@ -19,6 +19,22 @@
 - psql
 
 
+# Setting Up PostgreSQL Server and Importing Database
+
+## 1. Install PostgreSQL
+
+### Windows:
+1. Download the installer from [https://www.postgresql.org/download/windows/](https://www.postgresql.org/download/windows/).
+2. Run the installer and follow the setup wizard.
+3. Choose a password for the default `postgres` user.
+4. Select default port `5432` (or change if needed).
+
+### Linux (Ubuntu/Debian):
+```bash
+sudo apt update
+sudo apt install postgresql postgresql-contrib
+
+
 # Samsung phones 
 ## Requirements
 ```bash
