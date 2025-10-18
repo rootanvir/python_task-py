@@ -1,4 +1,4 @@
-# Reqyurement
+# Requirement
 # Project Dependencies
 
 ## Python Libraries
