@@ -18,7 +18,7 @@ class trade():
     def get_data(self):
         self.data = yf.download(self.symbol, start=self.from_date, end=self.to_date)
         self.clean_data()
-        self.data.to_csv("historical_market_data.csv")
+        self.data.to_csv("Algorithmic_Trading_Adventure/historical_market_data.csv")
         print("Data saved to csv [cleaned]")
         
     # Step 3: Clean data

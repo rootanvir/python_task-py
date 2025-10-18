@@ -27,7 +27,7 @@ class MultiAgentSystem:
     def agent2(self, phone1_data, phone2_data):
         try:
             if not phone1_data or not phone2_data:
-                return "⚠️ Could not find data for one or both phones."
+                return "Could not find data for one or both phones."
 
             p1 = phone1_data[0]
             p2 = phone2_data[0]
@@ -66,7 +66,7 @@ class MultiAgentSystem:
             p2_perf = performance_index(p2_ram, p2_battery, p2_display, p2_price)
 
             # --- Comparison output ---
-            result = f"\n📱 Comparing {p1[0]} and {p2[0]}:\n"
+            result = f"\n Comparing {p1[0]} and {p2[0]}:\n"
             result += f"- Display: {p1[2]} vs {p2[2]}\n"
             result += f"- Battery: {p1[3]} vs {p2[3]}\n"
             result += f"- Camera: {p1[4]} vs {p2[4]}\n"
@@ -75,29 +75,29 @@ class MultiAgentSystem:
             result += f"- Price: {p1[7]} vs {p2[7]}\n\n"
 
             # --- Verdict ---
-            result += f"⚙️ Performance Index:\n"
+            result += f"  Performance Index:\n"
             result += f"  {p1[0]} → {p1_perf:.2f}\n"
             result += f"  {p2[0]} → {p2_perf:.2f}\n\n"
 
             if p1_perf > p2_perf:
                 diff = p1_perf - p2_perf
-                verdict = f"🏆 {p1[0]} clearly outperforms {p2[0]} by {diff:.1f} points. It's a better choice for power users."
+                verdict = f" {p1[0]} clearly outperforms {p2[0]} by {diff:.1f} points. It's a better choice for power users."
             elif p2_perf > p1_perf:
                 diff = p2_perf - p1_perf
-                verdict = f"🏆 {p2[0]} outperforms {p1[0]} by {diff:.1f} points, offering stronger performance and efficiency."
+                verdict = f" {p2[0]} outperforms {p1[0]} by {diff:.1f} points, offering stronger performance and efficiency."
             else:
                 verdict = "⚖️ Both phones deliver nearly identical overall performance."
 
             # Price-to-performance tip
             if p1_price and p2_price:
                 cheaper = p1[0] if p1_price < p2_price else p2[0]
-                verdict += f"\n💰 However, {cheaper} offers better value for the price."
+                verdict += f"\n However, {cheaper} offers better value for the price."
 
             result += verdict
             return result
 
         except Exception as e:
-            return f"❌ Error generating review: {e}"
+            return f"Error generating review: {e}"
         
         
         
