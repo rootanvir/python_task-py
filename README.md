@@ -1,3 +1,26 @@
+# Reqyurement
+# Project Dependencies
+
+## Python Libraries
+- psycopg2
+- re
+- fastapi
+- uvicorn
+- pandas
+- numpy
+- selenium
+- json
+- logging
+
+## Browser/Driver
+- chromedriver
+
+## PostgreSQL Tools
+- pgAdmin
+- pg_dump
+- psql
+
+
 # Samsung phones 
 ## Requirements
 ```bash
