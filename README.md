@@ -1,6 +1,4 @@
 # Requirement
-# Project Dependencies
-
 ## Python Libraries
 - psycopg2
 - re
