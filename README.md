@@ -29,11 +29,6 @@
 3. Choose a password for the default `postgres` user.
 4. Select default port `5432` (or change if needed).
 
-### Linux (Ubuntu/Debian):
-```bash
-sudo apt update
-sudo apt install postgresql postgresql-contrib
-
 
 # Samsung phones 
 ## Requirements
